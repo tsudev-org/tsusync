@@ -25,6 +25,16 @@ Xác thực: `Authorization: Bearer <JWS quyền lợi>` lấy từ `GET https:/
 (RFC 9449). Không có Pro ⇒ `402 {"error":"pro_required"}`. Xoá 90 ngày sau khi hết Pro chỉ khi tsudev.com xác nhận
 không gia hạn (ADR-0002).
 
+## Thư viện máy khách
+
+| Ngôn ngữ | Thư mục | Dùng |
+| --- | --- | --- |
+| TypeScript `@tsudev/sync` | `clients/ts` | web/desktop: `await ready()`, `createKeys`/`unlockKeys`, `SyncClient`, `SyncSession` |
+| Dart `tsusync` | `clients/dart` | app Flutter: git dependency ghim commit (`path: clients/dart`); DPoP nối `DpopSigner` của `tsudev_ui` |
+
+Định dạng bản mã và khoá: `docs/adr/0003-ma-hoa-may-khach-dinh-dang-ts01.md`. Mọi thư viện phải qua
+`conformance/vectors-v1.json`; kiểm độc lập: `python3 -I conformance/verify_libsodium.py conformance/vectors-v1.json`.
+
 ## Phát triển
 
 ```bash
