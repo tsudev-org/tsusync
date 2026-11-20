@@ -51,6 +51,21 @@ npm run check
 `tsusync-files`, điền `database_id` + `NAMESPACES` trong `worker/wrangler.jsonc`, đặt secret `RP_PRIVATE_JWK` + `SUB_ENC_KEY`
 (ADR-0002), áp migration, route `sync.tsudev.com`.
 
+## English summary
+
+TsuDEV Sync (AGPL-3.0-only) is the shared **end-to-end encrypted** sync and backup service of the TsuDEV apps that have
+no server of their own. It is available to **TsuDEV Pro** accounts only, and the server stores **ciphertext only**.
+
+- **Server**: a Cloudflare Worker (`worker/`, D1 + R2) with a small HTTP API (records with a `rev` cursor, files,
+  account quota and deletion). Every request carries the ES256 entitlement JWS from tsudev.com (fresh within 24 hours,
+  DPoP-bound when the token has a device key); without Pro it answers `402 pro_required`.
+- **Clients**: TypeScript `@tsudev/sync`, Dart `tsusync`, Rust `tsusync` and .NET `Tsudev.Sync` all implement the same
+  `TS 01` ciphertext format (libsodium secretstream XChaCha20-Poly1305 in 64 KiB chunks, Argon2id keys, context-bound
+  associated data) and pass the shared vectors in `conformance/vectors-v1.json`, cross-checked with libsodium C.
+
+Build and test instructions are in [CONTRIBUTING.md](CONTRIBUTING.md); report vulnerabilities privately as described in
+[SECURITY.md](SECURITY.md); changes are listed in [CHANGELOG.md](CHANGELOG.md).
+
 ## Giấy phép
 
 AGPL-3.0-only - xem [`LICENSE`](LICENSE) và [`NOTICE`](NOTICE).

@@ -83,6 +83,18 @@ export interface WriteResult {
 const ID = /^[A-Za-z0-9._~:-]{1,128}$/;
 const INSTALLATION = /^[A-Za-z0-9_-]{22}$/;
 
+function isSecureBase(base: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(base);
+  } catch {
+    return false;
+  }
+  if (u.username !== '' || u.password !== '' || u.search !== '' || u.hash !== '') return false;
+  if (u.protocol === 'https:') return true;
+  return u.protocol === 'http:' && (u.hostname === 'localhost' || u.hostname === '127.0.0.1' || u.hostname === '[::1]');
+}
+
 function assertId(id: string): void {
   if (!ID.test(id)) throw new TypeError('Định danh phải 1-128 ký tự [A-Za-z0-9._~:-] và không chứa bản rõ.');
 }
@@ -98,6 +110,8 @@ export class SyncClient {
     let end = opts.baseUrl.length;
     while (end > 0 && opts.baseUrl.charCodeAt(end - 1) === 0x2f) end--;
     this.base = opts.baseUrl.slice(0, end);
+    // JWS quyền lợi đi trong header: chỉ https (http chỉ cho máy mình - `wrangler dev`).
+    if (!isSecureBase(this.base)) throw new TypeError('baseUrl phải là https:// (http chỉ cho localhost).');
     this.f = opts.fetch ?? globalThis.fetch.bind(globalThis);
     if (opts.installationId !== undefined && !INSTALLATION.test(opts.installationId)) {
       throw new TypeError('Mã cài đặt phải đúng 22 ký tự base64url.');

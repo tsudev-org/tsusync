@@ -4,8 +4,19 @@ Theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/) và SemVer.
 
 ## [Chưa phát hành]
 
+### Bảo mật
+
+- Máy khách TypeScript và Dart từ chối `baseUrl` không phải `https://` (http chỉ cho localhost) và URL có thông tin
+  đăng nhập/query - JWS quyền lợi không còn đi được qua kênh không mã hoá.
+- Rust: muối KDF lấy thẳng từ CSPRNG (`randombytes_buf`), bỏ bộ đệm khởi tạo bằng hằng (CodeQL
+  `rust/hard-coded-cryptographic-value`).
+
 ### Thêm
 
+- Fuzz đột biến hạt giống cố định cho máy khách TypeScript (`clients/ts/test/fuzz.test.ts`): bản mã, tham số KDF,
+  base64url chỉ trả đúng bản gốc hoặc ném `TsuSyncCryptoError`.
+- `CONTRIBUTING.md` (tiếng Anh), tóm tắt tiếng Anh trong README/SECURITY, hồ sơ OpenSSF Best Practices
+  (`docs/best-practices.json` + `.md`).
 - ADR-0003: định dạng bản mã `TS 01` (secretstream XChaCha20-Poly1305, khối 64 KiB, `sodium_pad`, AAD gắn
   không gian tên + loại + id), khoá Argon2id13 (NFKC, 3 lượt / 64 MiB, sàn 2 / 19 MiB, trần 16 / 1 GiB) + `crypto_kdf`.
 - Thư viện máy khách TypeScript `@tsudev/sync` 0.1.0 (`clients/ts`) và Dart `tsusync` 0.1.0 (`clients/dart`): mã hoá,
