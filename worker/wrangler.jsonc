@@ -1,5 +1,6 @@
 // TsuDEV Sync - sync.tsudev.com (CHƯA deploy: ADR-0001 mục 4 - chỉ deploy khi có sản phẩm dùng + chủ dự án duyệt).
-// KHÔNG có secret: Worker chỉ kiểm chữ ký JWS bằng JWKS công khai của tsudev.com.
+// KHÔNG chứa secret. Secret (`wrangler secret put`, đặt khi deploy): RP_PRIVATE_JWK (khoá riêng EC P-256 của client
+// `tsusync` tại tsudev.com - kênh trạng thái), SUB_ENC_KEY (32 byte ngẫu nhiên base64url). Thiếu ⇒ không tự xoá.
 // `database_id` là chỗ giữ chỗ - tạo D1/R2 thật là việc của chủ dự án (xem README mục Triển khai).
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -21,8 +22,12 @@
     "GLOBAL_DATA_BUDGET_MIB": "400",
     "GLOBAL_FILE_BUDGET_MIB": "8192",
     "WRITE_RATE_PER_MIN": "120",
-    // "on" CHỈ sau khi chủ dự án duyệt việc xoá tự động 90 ngày sau khi hết Pro (ADR-0001 mục 5).
-    "PURGE_ENABLED": "off"
+    // ADR-0002: xoá 90 ngày sau khi hết Pro CHỈ khi tsudev.com xác nhận qua kênh trạng thái (không hỏi được ⇒ hoãn).
+    "PURGE_MODE": "verified",
+    "RP_CLIENT_ID": "tsusync",
+    "ENTITLEMENTS_STATUS_URL": "https://tsudev.com/api/rp/entitlements/status",
+    // "on" khi mọi thư viện máy khách đã gửi DPoP và tsudev.com cấp JWS có `cnf.jkt` (ADR-0002 mục 3.2).
+    "DPOP_REQUIRED": "off"
   },
   "observability": { "enabled": true, "head_sampling_rate": 0.1 }
   // Không Cron: tài khoản đã dùng hết 5 Cron của gói Free - dọn dữ liệu chạy kèm yêu cầu (src/maintenance.ts).

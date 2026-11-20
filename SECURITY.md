@@ -14,6 +14,8 @@ Gửi kèm: thành phần, phiên bản (tag), cách tái hiện, tác động. 
   `typ` = `tsu-ent+jwt`, khoá theo `kid` từ JWKS lấy qua discovery, không khoá nhúng, không `crit`, kiểm `iss`, `aud`,
   `exp` (không nới), `iat`, `exp` ≤ `iat` + 7 ngày.
 - **Chịu tải**: giới hạn thân yêu cầu, kích thước bản ghi/tệp, hạn mức theo tài khoản, tần suất ghi, trần toàn dịch vụ.
-- **Không secret trong repo**: Worker không ký gì; cấu hình chỉ có giá trị công khai. Log chỉ mã lỗi cố định, không
+- **Không secret trong repo**: secret (`RP_PRIVATE_JWK`, `SUB_ENC_KEY`) chỉ đặt bằng `wrangler secret put`; test dùng giá trị giả. Log chỉ mã lỗi cố định, không
   JWS, không dữ liệu người dùng.
-- Rủi ro đã biết và chấp nhận: ADR-0001 mục 4-5 (JWS là bearer token ≤ 7 ngày; `pro_until` cũ khi xoá tự động).
+- **JWS tươi ≤ 24 giờ**, DPoP (RFC 9449) khi JWS gắn khoá thiết bị; chống phát lại `jti` (ADR-0002).
+- **Không xoá nhầm**: xoá 90 ngày sau khi hết Pro chỉ khi tsudev.com xác nhận qua kênh trạng thái; lỗi ⇒ hoãn.
+  `sub` lưu dạng AES-256-GCM (secret `SUB_ENC_KEY`), không dạng rõ.

@@ -20,8 +20,10 @@ Dịch vụ đồng bộ và sao lưu đám mây **dùng chung** của hệ sinh
 | PUT | `/v1/files/{id}` | Pro | `Content-Length`, `X-Tsu-Digest` |
 | GET / DELETE | `/v1/files/{id}` | Pro hoặc ≤ 90 ngày | |
 
-Xác thực: `Authorization: Bearer <JWS quyền lợi>` lấy từ `GET https://tsudev.com/api/me/entitlements`.
-Không có Pro ⇒ `402 {"error":"pro_required"}`.
+Xác thực: `Authorization: Bearer <JWS quyền lợi>` lấy từ `GET https://tsudev.com/api/me/entitlements`, `iat` ≤ 24 giờ
+(cũ hơn ⇒ `401 reason: "stale"`). JWS gắn khoá thiết bị (`cnf.jkt`) ⇒ `Authorization: DPoP <jws>` + header `DPoP`
+(RFC 9449). Không có Pro ⇒ `402 {"error":"pro_required"}`. Xoá 90 ngày sau khi hết Pro chỉ khi tsudev.com xác nhận
+không gia hạn (ADR-0002).
 
 ## Phát triển
 
@@ -34,7 +36,8 @@ npm run check
 ## Triển khai
 
 **Chưa triển khai.** Chỉ deploy khi có sản phẩm dùng và chủ dự án duyệt (ADR-0001 mục 4): tạo D1 `tsusync`, R2
-`tsusync-files`, điền `database_id` + `NAMESPACES` trong `worker/wrangler.jsonc`, áp migration, route `sync.tsudev.com`.
+`tsusync-files`, điền `database_id` + `NAMESPACES` trong `worker/wrangler.jsonc`, đặt secret `RP_PRIVATE_JWK` + `SUB_ENC_KEY`
+(ADR-0002), áp migration, route `sync.tsudev.com`.
 
 ## Giấy phép
 

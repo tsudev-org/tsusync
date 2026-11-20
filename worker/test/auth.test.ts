@@ -1,7 +1,7 @@
 import { SignJWT } from 'jose';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { DAY, ISSUER, call, json, jws, jwksFetches, makeKey, setJwksOverride, setupIdp } from './helpers';
+import { DAY, ISSUER, call, deviceKey, dpopProof, json, jws, jwksFetches, makeKey, setJwksOverride, setupIdp } from './helpers';
 
 beforeEach(setupIdp);
 
@@ -88,5 +88,64 @@ describe('xác thực bằng JWS quyền lợi (PRODUCT_POLICY 7.4)', () => {
   it('X-Tsu-Installation sai định dạng ⇒ 400', async () => {
     const res = await call('/v1/account', { token: await jws(), headers: { 'X-Tsu-Installation': 'ngan' } });
     expect(res.status).toBe(400);
+  });
+});
+
+describe('JWS tươi ≤ 24 giờ + DPoP (ADR-0002)', () => {
+  const now = () => Math.floor(Date.now() / 1000);
+
+  it('JWS còn hạn nhưng ký quá 24 giờ ⇒ 401 reason stale', async () => {
+    const res = await call('/v1/account', { token: await jws({ sub: 'st-1', iat: now() - 25 * 3600, exp: now() + DAY }) });
+    expect(res.status).toBe(401);
+    expect((await json(res)).reason).toBe('stale');
+  });
+
+  it('JWS gắn khoá (cnf.jkt) + DPoP hợp lệ ⇒ 200', async () => {
+    const k = await deviceKey();
+    const t = await jws({ sub: 'dp-1', cnf: { jkt: k.jkt } });
+    const res = await call('/v1/account', { headers: { Authorization: `DPoP ${t}`, DPoP: await dpopProof(k, 'GET', '/v1/account', t) } });
+    expect(res.status).toBe(200);
+  });
+
+  it('JWS gắn khoá mà dùng Bearer / thiếu DPoP / khoá khác / sai htm-htu / sai ath / iat cũ ⇒ 401', async () => {
+    const k = await deviceKey();
+    const other = await deviceKey();
+    const t = await jws({ sub: 'dp-2', cnf: { jkt: k.jkt } });
+    const cases: Record<string, string>[] = [
+      { Authorization: `Bearer ${t}`, DPoP: await dpopProof(k, 'GET', '/v1/account', t) },
+      { Authorization: `DPoP ${t}` },
+      { Authorization: `DPoP ${t}`, DPoP: await dpopProof(other, 'GET', '/v1/account', t) },
+      { Authorization: `DPoP ${t}`, DPoP: await dpopProof(k, 'POST', '/v1/account', t) },
+      { Authorization: `DPoP ${t}`, DPoP: await dpopProof(k, 'GET', '/v1/records', t) },
+      { Authorization: `DPoP ${t}`, DPoP: await dpopProof(k, 'GET', '/v1/account', t, { ath: 'x'.repeat(43) }) },
+      { Authorization: `DPoP ${t}`, DPoP: await dpopProof(k, 'GET', '/v1/account', t, { iat: now() - 300 }) },
+    ];
+    for (const headers of cases) {
+      const res = await call('/v1/account', { headers });
+      expect(res.status).toBe(401);
+      expect((await json(res)).reason).toBe('invalid_dpop_proof');
+    }
+  });
+
+  it('dùng lại cùng bằng chứng DPoP (cùng jti) ⇒ 401', async () => {
+    const k = await deviceKey();
+    const t = await jws({ sub: 'dp-3', cnf: { jkt: k.jkt } });
+    const proof = await dpopProof(k, 'GET', '/v1/account', t, { jti: 'jti-mot-lan-duy-nhat' });
+    expect((await call('/v1/account', { headers: { Authorization: `DPoP ${t}`, DPoP: proof } })).status).toBe(200);
+    expect((await call('/v1/account', { headers: { Authorization: `DPoP ${t}`, DPoP: proof } })).status).toBe(401);
+  });
+
+  it('DPOP_REQUIRED = on ⇒ JWS không gắn khoá bị từ chối (dpop_required)', async () => {
+    const res = await call('/v1/account', { token: await jws({ sub: 'dp-4' }), envOverride: { DPOP_REQUIRED: 'on' } });
+    expect(res.status).toBe(401);
+    expect((await json(res)).reason).toBe('dpop_required');
+    expect(res.headers.get('WWW-Authenticate')).toContain('DPoP');
+  });
+
+  it('query string không tính vào htu', async () => {
+    const k = await deviceKey();
+    const t = await jws({ sub: 'dp-5', cnf: { jkt: k.jkt } });
+    const res = await call('/v1/records?since=0', { headers: { Authorization: `DPoP ${t}`, DPoP: await dpopProof(k, 'GET', '/v1/records?since=0', t) } });
+    expect(res.status).toBe(200);
   });
 });

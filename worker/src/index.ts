@@ -34,7 +34,7 @@ app.use('*', async (c, next) => {
   h.set('Cross-Origin-Resource-Policy', 'same-origin');
 });
 
-app.get('/v1/health', (c) => c.json({ ok: true, service: 'tsusync', version: '0.1.0' }));
+app.get('/v1/health', (c) => c.json({ ok: true, service: 'tsusync', version: '0.2.0' }));
 
 app.get('/v1/account', requireCaller, async (c) => {
   const caller = c.get('caller');

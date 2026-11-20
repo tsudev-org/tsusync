@@ -1,6 +1,6 @@
 # ADR-0001: TsuDEV Sync chạy trên Workers + D1 + R2, mỗi sản phẩm một không gian tên, chỉ cho tài khoản Pro
 
-- **Trạng thái**: ĐÃ CHẤP NHẬN
+- **Trạng thái**: ĐÃ CHẤP NHẬN - mục 3.1 (thời hạn JWS), 3.7 và 5 (xoá tự động) được ADR-0002 thay thế
 - **Ngày**: 20/11/2026
 - **Người quyết định**: phiên điều phối tsudev (phase PRO-D1), theo quyết định của chủ dự án 19/11/2026 (phiếu `20261119-PRO1`)
 - **Liên quan**: `.standards/docs/PRODUCT_POLICY.md` mục 7.1, 7.2, 7.4, 7.5; `.standards/docs/FREE_TIER_STACK.md` mục 3.1;
