@@ -1,5 +1,8 @@
 # TsuDEV Sync (tsusync)
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16955/badge)](https://www.bestpractices.dev/projects/16955)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/tsudev-org/tsusync/badge)](https://scorecard.dev/viewer/?uri=github.com/tsudev-org/tsusync)
+
 Dịch vụ đồng bộ và sao lưu đám mây **dùng chung** của hệ sinh thái tsudev cho các sản phẩm không có máy chủ riêng
 (desktop, trò chơi, tsufiles, lotus-share...). Chỉ dành cho tài khoản **TsuDEV Pro**; máy chủ chỉ giữ **bản mã**.
 
