@@ -4,6 +4,10 @@ on:
   push: { branches: [main], tags: ['v*'] }
   pull_request:
 permissions: { contents: read }
+env:
+  # Cùng ghim với qulythuchi: Dart SDK lấy từ Flutter ở đúng commit (gói `sodium` 4.x dựng libsodium qua native assets).
+  FLUTTER_VERSION: '3.47.8'
+  FLUTTER_COMMIT: '737ba8f885dc774b53b442759999a312c9461e4e'
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -35,7 +39,7 @@ jobs:
           curl -sSfL -o "$RUNNER_TEMP/$tarball" "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${tarball}"
           echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$tarball" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" gitleaks
-          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 .
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --verbose --exit-code 1 .
 
   worker:
     name: Máy chủ (worker)
@@ -59,3 +63,58 @@ jobs:
           npm test
       - name: Build Worker (dry-run, không deploy)
         run: npx wrangler deploy --dry-run --outdir "$RUNNER_TEMP/worker"
+
+  client-ts:
+    name: Thư viện TypeScript (@tsudev/sync)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults: { run: { working-directory: clients/ts } }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: '22' }
+      - name: Cài phụ thuộc đúng lockfile (npm ghim phiên bản)
+        run: npx -y npm@11.21.2 ci --no-fund --no-audit
+      - name: Kiểm lỗ hổng phụ thuộc
+        run: node ../../worker/scripts/audit.mjs
+      - name: Typecheck, test vector + client, build
+        run: |
+          set -euo pipefail
+          npm run typecheck
+          npm test
+          npm run build
+      - name: Bản mã do TypeScript vừa tạo mở được bằng libsodium độc lập
+        run: |
+          set -euo pipefail
+          sudo apt-get install -yq libsodium23 >/dev/null
+          npm run --silent vectors > "$RUNNER_TEMP/ts.json"
+          python3 -I ../../conformance/verify_libsodium.py ../../conformance/vectors-v1.json "$RUNNER_TEMP/ts.json"
+
+  client-dart:
+    name: Thư viện Dart (tsusync)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults: { run: { working-directory: clients/dart } }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: Flutter/Dart (ghim commit)
+        working-directory: .
+        run: |
+          git clone --depth 1 -b "$FLUTTER_VERSION" https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = "$FLUTTER_COMMIT"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Định dạng, phân tích, test vector + client
+        run: |
+          set -euo pipefail
+          dart pub get
+          dart format --output=none --set-exit-if-changed lib test tool || { dart format lib test tool >/dev/null; git diff; exit 1; }
+          dart analyze --fatal-infos
+          dart test
+      - name: Bản mã do Dart vừa tạo mở được bằng libsodium độc lập
+        run: |
+          set -euo pipefail
+          sudo apt-get install -yq libsodium23 >/dev/null
+          dart run tool/emit_vectors.dart > "$RUNNER_TEMP/dart.json"
+          python3 -I ../../conformance/verify_libsodium.py "$RUNNER_TEMP/dart.json"

@@ -39,7 +39,8 @@ xuất tại repo `tsudev-standards` theo `.standards/docs/SYNC.md` mục 1.
 ### B.1. Repo này là gì
 
 - **Loại**: dịch vụ **TsuDEV Sync** - máy chủ đồng bộ bản mã dùng chung cho sản phẩm không có máy chủ riêng
-  (PRODUCT_POLICY 7.4). Thư viện máy khách (`@tsudev/sync`, Dart `tsusync`) thêm ở phase PRO-D2.
+  (PRODUCT_POLICY 7.4). Thư viện máy khách TypeScript `@tsudev/sync` (`clients/ts`) và Dart `tsusync` (`clients/dart`), vector đối chiếu ở
+  `conformance/` (ADR-0003). Rust/.NET ở PRO-D3.
 - **Stack**: Cloudflare Workers + D1 + R2, TypeScript, Hono, jose (kiểm JWS ES256, DPoP), zod. Chi tiết: `docs/adr/`.
 - **Mức phân loại dữ liệu cao nhất**: D3 nhưng CHỈ ở dạng bản mã (máy chủ không có khoá); siêu dữ liệu D1.
 - **Người liên hệ khi có sự cố**: chủ dự án tsudev.
@@ -61,6 +62,7 @@ npx wrangler deploy --dry-run --outdir /tmp/tsusync-build   # chỉ dựng, KHÔ
 | `worker/src/auth.ts` | phiên điều phối (hợp đồng PRODUCT_POLICY 7.4 - phải trùng `EntitlementVerifier` của tsudev_ui) |
 | `worker/migrations/` | phiên điều phối - chỉ THÊM migration mới, không sửa migration đã gộp |
 | `worker/src/*` còn lại, `docs/adr/` | phiên điều phối |
+| `clients/`, `conformance/` | phiên điều phối - đổi khuôn byte ⇒ ADR mới + vector mới, KHÔNG sửa `vectors-v1.json` |
 
 ### B.4. Điểm lệch chuẩn đã biết
 
@@ -71,6 +73,8 @@ npx wrangler deploy --dry-run --outdir /tmp/tsusync-build   # chỉ dựng, KHÔ
 
 ### B.5. Việc riêng của repo cần biết trước khi sửa
 
+- `clients/dart` không chạy được trên máy không có Dart SDK: CI (job `client-dart`) là nơi kiểm; định dạng theo
+  `page_width: 120` của `analysis_options.yaml`.
 - **KHÔNG deploy, KHÔNG tạo tài nguyên Cloudflare** khi chưa có sản phẩm dùng và chủ dự án chưa duyệt (ADR-0001 mục 4).
   `database_id` trong `wrangler.jsonc` là chỗ giữ chỗ.
 - Mọi tính năng mới phải ước lượng lại hạn mức miễn phí (ADR-0001 mục 1.1). Cần vượt ⇒ dừng, hỏi chủ dự án.

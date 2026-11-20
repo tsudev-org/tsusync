@@ -2,6 +2,16 @@
 
 Theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/) và SemVer.
 
+## [Chưa phát hành]
+
+### Thêm
+
+- ADR-0003: định dạng bản mã `TS 01` (secretstream XChaCha20-Poly1305, khối 64 KiB, `sodium_pad`, AAD gắn
+  không gian tên + loại + id), khoá Argon2id13 (NFKC, 3 lượt / 64 MiB, sàn 2 / 19 MiB, trần 16 / 1 GiB) + `crypto_kdf`.
+- Thư viện máy khách TypeScript `@tsudev/sync` 0.1.0 (`clients/ts`) và Dart `tsusync` 0.1.0 (`clients/dart`): mã hoá,
+  máy khách HTTP (402 `pro_required`, `stale` thử lại một lần, DPoP qua hàm ký), `SyncSession`.
+- `conformance/vectors-v1.json` + bộ kiểm libsodium độc lập (Python ctypes); CI kiểm cả bản mã TypeScript và Dart vừa tạo.
+
 ## [0.2.0] - 20/11/2026
 
 ### Thêm
