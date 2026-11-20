@@ -1,0 +1,10 @@
+{
+  "description": "Cảnh báo phụ thuộc DEV được chấp nhận có hạn (không vào bản build Worker). Hết hạn ⇒ CI đỏ lại. Phụ thuộc production KHÔNG có ngoại lệ.",
+  "accepted": {
+    "GHSA-fc5q-39xc-vjpf": {
+      "package": "picomatch",
+      "until": "2026-12-31",
+      "reason": "ReDoS khi khớp glob - chỉ trong vite/vitest/eslint/wrangler chạy với glob tin cậy của repo; chưa có bản vá (<= 4.0.7, đo 18/11/2026). Có bản vá ⇒ ghim đè và xóa mục này."
+    }
+  }
+}

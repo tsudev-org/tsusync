@@ -1,0 +1,29 @@
+// TsuDEV Sync - sync.tsudev.com (CHƯA deploy: ADR-0001 mục 4 - chỉ deploy khi có sản phẩm dùng + chủ dự án duyệt).
+// KHÔNG có secret: Worker chỉ kiểm chữ ký JWS bằng JWKS công khai của tsudev.com.
+// `database_id` là chỗ giữ chỗ - tạo D1/R2 thật là việc của chủ dự án (xem README mục Triển khai).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tsusync",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "d1_databases": [
+    { "binding": "DB", "database_name": "tsusync", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "tsusync-files" }],
+  "vars": {
+    "OIDC_ISSUER": "https://tsudev.com/oidc",
+    // client_id các sản phẩm dùng TsuDEV Sync - thêm sản phẩm ⇒ thêm vào đây (ADR của sản phẩm).
+    "NAMESPACES": "",
+    "QUOTAS": "{}",
+    // 80% hạn mức miễn phí (đo 20/11/2026): D1 500 MB/cơ sở dữ liệu, R2 10 GB-tháng.
+    "GLOBAL_DATA_BUDGET_MIB": "400",
+    "GLOBAL_FILE_BUDGET_MIB": "8192",
+    "WRITE_RATE_PER_MIN": "120",
+    // "on" CHỈ sau khi chủ dự án duyệt việc xoá tự động 90 ngày sau khi hết Pro (ADR-0001 mục 5).
+    "PURGE_ENABLED": "off"
+  },
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 }
+  // Không Cron: tài khoản đã dùng hết 5 Cron của gói Free - dọn dữ liệu chạy kèm yêu cầu (src/maintenance.ts).
+}

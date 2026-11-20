@@ -1,0 +1,61 @@
+# Cổng kiểm cho mọi PR và main. Action ghim SHA; công cụ tải ngoài ghim phiên bản + checksum.
+name: CI
+on:
+  push: { branches: [main], tags: ['v*'] }
+  pull_request:
+permissions: { contents: read }
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  standards:
+    name: Quy ước tsudev
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: ./scripts/check-standards.sh
+      - run: ./scripts/sync-standards.sh --check
+
+  gitleaks:
+    name: Quét lộ bí mật (gitleaks)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      # gitleaks-action đòi license khi repo thuộc Organization ⇒ binary ghim phiên bản + checksum.
+      GITLEAKS_VERSION: '8.30.1'
+      GITLEAKS_SHA256: '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, persist-credentials: false }
+      - run: |
+          set -euo pipefail
+          tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$tarball" "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${tarball}"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$tarball" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 .
+
+  worker:
+    name: Máy chủ (worker)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults: { run: { working-directory: worker } }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: '22' }
+      - name: Cài phụ thuộc đúng lockfile (npm ghim phiên bản)
+        run: npx -y npm@11.21.2 ci --no-fund --no-audit
+      - name: Kiểm lỗ hổng phụ thuộc
+        run: node scripts/audit.mjs
+      - name: Typecheck, lint, test (D1/R2 giả lập cục bộ, không cần token)
+        run: |
+          set -euo pipefail
+          npm run typecheck
+          npm run lint
+          npm test
+      - name: Build Worker (dry-run, không deploy)
+        run: npx wrangler deploy --dry-run --outdir "$RUNNER_TEMP/worker"

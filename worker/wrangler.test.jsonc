@@ -1,0 +1,19 @@
+// Cấu hình CHỈ cho bộ test (vitest-pool-workers): D1/R2 giả lập cục bộ, không tài nguyên thật.
+{
+  "name": "tsusync-test",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [{ "binding": "DB", "database_name": "tsusync-test", "database_id": "test", "migrations_dir": "migrations" }],
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "tsusync-files-test" }],
+  "vars": {
+    "OIDC_ISSUER": "https://idp.test/oidc",
+    "NAMESPACES": "tsufiles,lotus-share,tiny",
+    "QUOTAS": "{\"tiny\": {\"data_mib\": 0.01, \"files_mib\": 0.02}}",
+    "GLOBAL_DATA_BUDGET_MIB": "400",
+    "GLOBAL_FILE_BUDGET_MIB": "8192",
+    "WRITE_RATE_PER_MIN": "1000",
+    "PURGE_ENABLED": "on",
+    "MAINTENANCE_SAMPLE": "0"
+  }
+}

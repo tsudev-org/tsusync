@@ -1,0 +1,14 @@
+tsusync (TsuDEV Sync)
+Copyright (C) 2026 tsudev
+
+This program is free software: you can redistribute it and/or modify it under the terms of the
+GNU Affero General Public License version 3 as published by the Free Software Foundation (AGPL-3.0-only).
+See the LICENSE file.
+
+The name "tsudev" / "TsuDEV" and its logos are not licensed under the AGPL and may not be used to endorse or
+promote derived products without prior written permission.
+
+Dependencies (fetched by npm, not bundled in this repository; bundled into the deployed Worker):
+- hono (MIT, Copyright Yusuke Wada)
+- jose (MIT, Copyright Filip Skokan)
+- zod (MIT, Copyright Colin McDonnell)
