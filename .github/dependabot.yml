@@ -19,3 +19,8 @@ updates:
     schedule: { interval: monthly, timezone: Asia/Ho_Chi_Minh }
     open-pull-requests-limit: 2
     groups: { cargo: { patterns: ['*'] } }
+  - package-ecosystem: nuget
+    directory: /clients/dotnet
+    schedule: { interval: monthly, timezone: Asia/Ho_Chi_Minh }
+    open-pull-requests-limit: 2
+    groups: { nuget: { patterns: ['*'] } }

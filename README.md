@@ -32,6 +32,7 @@ không gia hạn (ADR-0002).
 | TypeScript `@tsudev/sync` | `clients/ts` | web/desktop: `await ready()`, `createKeys`/`unlockKeys`, `SyncClient`, `SyncSession` |
 | Dart `tsusync` | `clients/dart` | app Flutter: git dependency ghim commit (`path: clients/dart`); DPoP nối `DpopSigner` của `tsudev_ui` |
 | Rust `tsusync` | `clients/rust` | app Rust/Tauri: git dependency ghim commit; CHỈ phần mã hoá (`create_keys`/`unlock_keys`, `encrypt`/`decrypt`) - chưa có máy khách HTTP |
+| .NET `Tsudev.Sync` | `clients/dotnet` | app .NET 8+ (WinUI/MAUI/Avalonia): ProjectReference ghim commit; CHỈ phần mã hoá (`TsuSyncCrypto`), libsodium C qua gói NuGet `libsodium` |
 
 Định dạng bản mã và khoá: `docs/adr/0003-ma-hoa-may-khach-dinh-dang-ts01.md`. Mọi thư viện phải qua
 `conformance/vectors-v1.json`; kiểm độc lập: `python3 -I conformance/verify_libsodium.py conformance/vectors-v1.json`.

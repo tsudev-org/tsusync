@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Tsudev.Sync</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Version>0.1.0</Version>
+    <Description>Thư viện máy khách TsuDEV Sync - mã hoá đầu cuối định dạng TS 01 (libsodium secretstream + Argon2id, ADR-0003)</Description>
+    <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Bản dựng libsodium C chính chủ (jedisct1) cho win/linux/osx/android/ios - gọi qua P/Invoke. -->
+    <PackageReference Include="libsodium" Version="1.0.20.1" />
+  </ItemGroup>
+</Project>
