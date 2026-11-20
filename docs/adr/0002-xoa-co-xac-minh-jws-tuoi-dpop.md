@@ -3,7 +3,7 @@
 - **Trạng thái**: ĐÃ CHẤP NHẬN (thay mục 3.1 về thời hạn JWS và mục 3.7, 5 về xoá tự động của ADR-0001)
 - **Ngày**: 20/11/2026
 - **Người quyết định**: phiên điều phối tsudev, được chủ dự án uỷ quyền chọn phương án (20/11/2026)
-- **Liên quan**: ADR-0001; `.standards/docs/PRODUCT_POLICY.md` mục 7.2, 7.4 (từ bộ quy ước v3.10.0: Pro theo kỳ 1 năm,
+- **Liên quan**: ADR-0001; `.standards/docs/PRODUCT_POLICY.md` mục 7.2, 7.4 (từ bộ quy ước v4.0.0: Pro theo kỳ 1 năm,
   kênh trạng thái quyền lợi); RFC 9449 (DPoP), RFC 7523 (private_key_jwt), RFC 7638 (JWK thumbprint)
 
 ## 1. Bối cảnh
@@ -44,7 +44,7 @@ Ràng buộc: 0 đồng; không thêm dịch vụ; máy chủ không giữ `sub`
   - `unknown_subject`, lỗi mạng/HTTP, khung sai, không giải được `sub_enc` ⇒ **hoãn**, hỏi lại sau 24 giờ.
 - Thiếu `RP_PRIVATE_JWK`/`SUB_ENC_KEY` hoặc `PURGE_MODE = "off"` ⇒ không bao giờ tự xoá. Yêu cầu xoá của chính người
   dùng (`DELETE /v1/account`) luôn chạy.
-- Hợp đồng kênh trạng thái được đưa vào PRODUCT_POLICY 7.4 (bộ quy ước v3.10.0); tsudev.com triển khai theo phiếu
+- Hợp đồng kênh trạng thái được đưa vào PRODUCT_POLICY 7.4 (bộ quy ước v4.0.0); tsudev.com triển khai theo phiếu
   `tsudev/logs/handover/20261120-PRO2_*` (cho phép client `tsusync` hỏi thay các `client_id` trong NAMESPACES).
 
 ### 3.2. JWS tươi và DPoP
@@ -58,7 +58,7 @@ Ràng buộc: 0 đồng; không thêm dịch vụ; máy chủ không giữ `sub`
   `/api/me/entitlements`; thư viện `@tsudev/sync`/Dart `tsusync` (PRO-D2) và `tsudev_ui` ký DPoP; (3) khi mọi máy khách
   đã gửi DPoP ⇒ đặt `DPOP_REQUIRED = "on"` (JWS không gắn khoá ⇒ 401 `dpop_required`).
 
-### 3.3. Pro theo kỳ 1 năm (PRODUCT_POLICY 7.2, v3.10.0)
+### 3.3. Pro theo kỳ 1 năm (PRODUCT_POLICY 7.2, v4.0.0)
 
 Máy chủ không đổi logic: vẫn dựa trên `pro_until` của JWS / kênh trạng thái. Hết kỳ mà không gia hạn ⇒ `402` khi đẩy
 (trạng thái miễn phí - "khách mời"), kéo/xuất thêm 90 ngày, sau đó xoá có xác minh như mục 3.1.

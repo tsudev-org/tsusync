@@ -4,7 +4,7 @@ import { randomToken } from './crypto';
 import type { Env } from './env';
 
 /**
- * Kênh trạng thái quyền lợi của tsudev.com (PRODUCT_POLICY 7.4, từ v3.10.0):
+ * Kênh trạng thái quyền lợi của tsudev.com (PRODUCT_POLICY 7.4, từ v4.0.0):
  * `POST {ENTITLEMENTS_STATUS_URL}` + `Authorization: Bearer <client assertion>` (private_key_jwt, RFC 7523),
  * thân `{"client_id": "<ns>", "subs": ["<sub>", ...]}` (≤ 100). tsudev.com trả trạng thái cho mọi `sub` ĐÃ TỪNG cấp
  * quyền cho `client_id` đó (không phụ thuộc grant OIDC 30 ngày) - đúng ca "gia hạn trên web mà không mở app".
