@@ -1,0 +1,20 @@
+[package]
+name = "tsusync"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89"
+description = "Thư viện máy khách TsuDEV Sync - mã hoá đầu cuối định dạng TS 01 (libsodium secretstream + Argon2id, ADR-0003)"
+license = "AGPL-3.0-only"
+repository = "https://github.com/tsudev-org/tsusync"
+publish = false
+
+[dependencies]
+# Cài đặt libsodium thuần Rust (không cần libsodium C) - cùng thuật toán, cùng byte với libsodium.
+dryoc = { version = "=2.0.1", default-features = false, features = ["std"] }
+serde_json = "1"
+unicode-normalization = "0.1.25"
+zeroize = "1.8"
+
+# Argon2id 64 MiB ở chế độ debug chậm hàng chục giây - tối ưu phụ thuộc cả khi chạy test.
+[profile.dev.package."*"]
+opt-level = 3

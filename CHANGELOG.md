@@ -11,6 +11,9 @@ Theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/) và SemVer.
 - Thư viện máy khách TypeScript `@tsudev/sync` 0.1.0 (`clients/ts`) và Dart `tsusync` 0.1.0 (`clients/dart`): mã hoá,
   máy khách HTTP (402 `pro_required`, `stale` thử lại một lần, DPoP qua hàm ký), `SyncSession`.
 - `conformance/vectors-v1.json` + bộ kiểm libsodium độc lập (Python ctypes); CI kiểm cả bản mã TypeScript và Dart vừa tạo.
+- PRO-D3: crate Rust `tsusync` 0.1.0 (`clients/rust`, `dryoc` + `unicode-normalization`) - phần mã hoá cùng API/ngữ nghĩa
+  với TypeScript, qua đủ 36 ca `vectors-v1.json`; job CI `client-rust` (fmt, clippy, test, bản mã Rust vừa tạo mở bằng
+  libsodium C).
 
 ## [0.2.0] - 20/11/2026
 

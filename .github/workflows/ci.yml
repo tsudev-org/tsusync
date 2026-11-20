@@ -118,3 +118,29 @@ jobs:
           sudo apt-get install -yq libsodium23 >/dev/null
           dart run tool/emit_vectors.dart > "$RUNNER_TEMP/dart.json"
           python3 -I ../../conformance/verify_libsodium.py "$RUNNER_TEMP/dart.json"
+
+  client-rust:
+    name: Thư viện Rust (tsusync)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults: { run: { working-directory: clients/rust } }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: Rust (ghim theo rust-toolchain.toml)
+        run: |
+          set -euo pipefail
+          rustup toolchain install "$(sed -n 's/^channel = "\(.*\)"/\1/p' rust-toolchain.toml)" --profile minimal -c clippy,rustfmt
+          rustc --version
+      - name: Định dạng, clippy, test vector (đúng Cargo.lock)
+        run: |
+          set -euo pipefail
+          cargo fmt --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked
+      - name: Bản mã do Rust vừa tạo mở được bằng libsodium độc lập
+        run: |
+          set -euo pipefail
+          sudo apt-get install -yq libsodium23 >/dev/null
+          cargo run --locked -q --example emit_vectors > "$RUNNER_TEMP/rust.json"
+          python3 -I ../../conformance/verify_libsodium.py "$RUNNER_TEMP/rust.json"
