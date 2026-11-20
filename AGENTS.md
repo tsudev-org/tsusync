@@ -39,8 +39,9 @@ xuất tại repo `tsudev-standards` theo `.standards/docs/SYNC.md` mục 1.
 ### B.1. Repo này là gì
 
 - **Loại**: dịch vụ **TsuDEV Sync** - máy chủ đồng bộ bản mã dùng chung cho sản phẩm không có máy chủ riêng
-  (PRODUCT_POLICY 7.4). Thư viện máy khách TypeScript `@tsudev/sync` (`clients/ts`) và Dart `tsusync` (`clients/dart`), vector đối chiếu ở
-  `conformance/` (ADR-0003). Rust/.NET ở PRO-D3.
+  (PRODUCT_POLICY 7.4). Thư viện máy khách TypeScript `@tsudev/sync` (`clients/ts`), Dart `tsusync` (`clients/dart`), crate Rust `tsusync`
+  (`clients/rust`) và .NET `Tsudev.Sync` (`clients/dotnet`) - hai bản sau CHỈ phần mã hoá; vector đối chiếu ở
+  `conformance/` (ADR-0003).
 - **Stack**: Cloudflare Workers + D1 + R2, TypeScript, Hono, jose (kiểm JWS ES256, DPoP), zod. Chi tiết: `docs/adr/`.
 - **Mức phân loại dữ liệu cao nhất**: D3 nhưng CHỈ ở dạng bản mã (máy chủ không có khoá); siêu dữ liệu D1.
 - **Người liên hệ khi có sự cố**: chủ dự án tsudev.
@@ -75,6 +76,12 @@ npx wrangler deploy --dry-run --outdir /tmp/tsusync-build   # chỉ dựng, KHÔ
 
 - `clients/dart` không chạy được trên máy không có Dart SDK: CI (job `client-dart`) là nơi kiểm; định dạng theo
   `page_width: 120` của `analysis_options.yaml`.
+- `clients/rust` dùng `dryoc` (libsodium viết lại bằng Rust, ghim `=2.0.1`) - KHÔNG phải libsodium C, nên bằng chứng đúng
+  là vector + libsodium C độc lập (job `client-rust`). Nâng `dryoc` ⇒ chạy lại cả hai. Toolchain ghim ở
+  `clients/rust/rust-toolchain.toml`; phụ thuộc được tối ưu cả ở test (Argon2id 64 MiB ở debug rất chậm).
+- `clients/dotnet` gọi libsodium C qua P/Invoke (gói NuGet `libsodium` chính chủ). SDK ghim .NET 8 bằng `global.json`;
+  không có tệp `.sln` - lệnh chạy theo từng project (xem job `client-dotnet`). Thêm/đổi phụ thuộc ⇒ cập nhật
+  `packages.lock.json` (CI `--locked-mode`).
 - **KHÔNG deploy, KHÔNG tạo tài nguyên Cloudflare** khi chưa có sản phẩm dùng và chủ dự án chưa duyệt (ADR-0001 mục 4).
   `database_id` trong `wrangler.jsonc` là chỗ giữ chỗ.
 - Mọi tính năng mới phải ước lượng lại hạn mức miễn phí (ADR-0001 mục 1.1). Cần vượt ⇒ dừng, hỏi chủ dự án.
