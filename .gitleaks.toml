@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+# Vector đối chiếu ADR-0003: khoá thử (byte 0xa0..0xbf), muối 0..15 và bản mã CÔNG KHAI có chủ đích - mọi thư viện
+# máy khách phải mở được đúng các giá trị này. Không chứa bí mật thật. CHỈ miễn đúng tệp này.
+[[allowlists]]
+description = "Vector đối chiếu mật mã công khai (ADR-0003)"
+paths = ['''^conformance/vectors-v1\.json$''']

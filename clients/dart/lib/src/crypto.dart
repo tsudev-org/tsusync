@@ -78,8 +78,8 @@ final class SyncKeys {
 ///
 /// - Khoá gốc = Argon2id13(NFKC(mật khẩu), muối 16 B, ≥ 3 lượt / 64 MiB) - thông số qulythuchi ADR-0007.
 /// - Khoá dữ liệu = crypto_kdf(gốc, 1, "TSUSYNC1"); mã kiểm = crypto_kdf(gốc, 2, "TSUSYNC1", 16 B).
-/// - Bản mã = 'T' 'S' 01 <loại> ‖ header 24 B ‖ khối secretstream (bản rõ sodium_pad, khối 64 KiB, khối cuối
-///   TAG_FINAL); AAD mỗi khối = 4 byte đầu ‖ UTF-8("tsusync|v1|<ns>|<loại>|<id>").
+/// - Bản mã = `'T' 'S' 01 <loại>` ‖ header 24 B ‖ khối secretstream (bản rõ sodium_pad, khối 64 KiB, khối cuối
+///   TAG_FINAL); AAD mỗi khối = 4 byte đầu ‖ UTF-8(`tsusync|v1|<ns>|<loại>|<id>`).
 final class TsuSyncCrypto {
   TsuSyncCrypto(this.sodium);
 

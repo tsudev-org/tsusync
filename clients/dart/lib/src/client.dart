@@ -28,7 +28,7 @@ class SyncHttpException implements Exception {
 /// Tài khoản không có Pro (`no_pro`) hoặc đã quá 90 ngày sau hết hạn (`grace_expired`). App hiện màn Pro, KHÔNG
 /// thử lại (PRODUCT_POLICY 7.4).
 class ProRequiredException extends SyncHttpException {
-  const ProRequiredException({String? reason}) : super(402, 'pro_required', reason: reason);
+  const ProRequiredException({super.reason}) : super(402, 'pro_required');
 }
 
 class PushItem {
