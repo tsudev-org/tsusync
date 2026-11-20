@@ -94,7 +94,10 @@ export class SyncClient {
 
   constructor(opts: ClientOptions) {
     this.opts = opts;
-    this.base = opts.baseUrl.replace(/\/+$/, '');
+    // Cắt '/' cuối bằng vòng lặp - regex `/\/+$/` chạy đa thức trên chuỗi nhiều '/' (CodeQL).
+    let end = opts.baseUrl.length;
+    while (end > 0 && opts.baseUrl.charCodeAt(end - 1) === 0x2f) end--;
+    this.base = opts.baseUrl.slice(0, end);
     this.f = opts.fetch ?? globalThis.fetch.bind(globalThis);
     if (opts.installationId !== undefined && !INSTALLATION.test(opts.installationId)) {
       throw new TypeError('Mã cài đặt phải đúng 22 ký tự base64url.');

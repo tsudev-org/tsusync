@@ -61,7 +61,9 @@ void main() {
     );
     await expectLater(
       client.listFiles(),
-      throwsA(isA<SyncHttpException>().having((e) => e.retryAfter, 'retryAfter', 5).having((e) => e.code, 'code', 'busy')),
+      throwsA(
+        isA<SyncHttpException>().having((e) => e.retryAfter, 'retryAfter', 5).having((e) => e.code, 'code', 'busy'),
+      ),
     );
   });
 

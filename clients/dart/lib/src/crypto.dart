@@ -243,9 +243,7 @@ final class TsuSyncCrypto {
     ];
     final List<SecretStreamPlainMessage> plain;
     try {
-      plain = await sodium.crypto.secretStream
-          .pullEx(cipherStream: Stream.fromIterable(input), key: dataKey)
-          .toList();
+      plain = await sodium.crypto.secretStream.pullEx(cipherStream: Stream.fromIterable(input), key: dataKey).toList();
     } on Object {
       // Sai MAC, khối sau TAG_FINAL (StateError được chuyển thành sự kiện lỗi), thiếu khối cuối...
       throw const TsuSyncCryptoException();

@@ -70,14 +70,9 @@ class SyncPage<T> {
 
 /// Máy khách HTTP của TsuDEV Sync (ADR-0001 mục 3, ADR-0002 mục 3.2). Chỉ chuyển bản mã; [SyncSession] ghép mã hoá.
 class SyncClient {
-  SyncClient({
-    required Uri baseUrl,
-    required this.getJws,
-    this.installationId,
-    this.dpop,
-    http.Client? httpClient,
-  }) : _base = baseUrl.toString().replaceFirst(RegExp(r'/+$'), ''),
-       _http = httpClient ?? http.Client() {
+  SyncClient({required Uri baseUrl, required this.getJws, this.installationId, this.dpop, http.Client? httpClient})
+    : _base = baseUrl.toString().replaceFirst(RegExp(r'/+$'), ''),
+      _http = httpClient ?? http.Client() {
     if (installationId != null && !_installation.hasMatch(installationId!)) {
       throw ArgumentError.value(installationId, 'installationId', 'phải đúng 22 ký tự base64url');
     }
