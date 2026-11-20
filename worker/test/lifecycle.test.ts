@@ -1,8 +1,10 @@
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { decryptSub } from '../src/crypto';
+import type { Env } from '../src/env';
 import { runMaintenance } from '../src/maintenance';
-import { DAY, b64u, bytes, call, digestOf, json, jws, push, setupIdp } from './helpers';
+import { DAY, b64u, bytes, call, digestOf, json, jws, push, rpKey, setStatusResponder, setupIdp, statusCalls, verifyAssertion } from './helpers';
 
 beforeEach(setupIdp);
 
@@ -44,29 +46,92 @@ describe('xoá dữ liệu', () => {
     expect((await json(await push(t, [{ id: 'n', payload: 'AQID' }]))).results[0].rev).toBe(1);
   });
 
-  it('hết Pro quá 90 ngày ⇒ tự xoá khi PURGE_ENABLED = on; chưa quá ⇒ giữ', async () => {
-    const keep = await seed('life-keep');
-    const gone = await seed('life-gone');
-    // JWS mới hơn báo Pro đã hết hạn (lưu pro_until), rồi tua thời gian.
-    const lapsedAt = Math.floor(Date.now() / 1000) - 60;
-    await call('/v1/account', { token: await jws({ sub: 'life-gone', pro_until: lapsedAt, iat: Math.floor(Date.now() / 1000) + 1 }) });
-    await runMaintenance(env, Date.now() + 89 * DAY * 1000);
-    expect((await json(await call('/v1/account', { token: gone }))).rev).toBeGreaterThan(0);
+  const t0 = () => Math.floor(Date.now() / 1000);
+  const FUTURE = () => Date.now() + 91 * DAY * 1000;
+  const withRp = async (o: Partial<Env> = {}) => ({ ...env, RP_PRIVATE_JWK: (await rpKey()).privateJwk, ...o }) as Env;
+  /** Tạo dữ liệu rồi báo (bằng JWS mới hơn) rằng Pro đã hết hạn 1 phút trước. */
+  async function seedLapsed(sub: string) {
+    const t = await seed(sub);
+    await call('/v1/account', { token: await jws({ sub, pro_until: t0() - 60, iat: t0() + 1 }) });
+    return t;
+  }
+  const revOf = async (sub: string) => (await json(await call('/v1/account', { token: await jws({ sub, iat: t0() + 2 }) }))).rev as number;
 
-    await runMaintenance(env, Date.now() + 90 * DAY * 1000);
-    await runMaintenance(env, Date.now() + 90 * DAY * 1000);
-    const rows = await env.DB.prepare('SELECT COUNT(*) AS n FROM records r JOIN accounts a USING (ns, sub_key)').first<{ n: number }>();
-    expect(rows!.n).toBeGreaterThan(0); // còn của life-keep
-    expect((await json(await call('/v1/account', { token: keep }))).rev).toBe(3);
-    expect((await json(await call('/v1/account', { token: gone }))).rev).toBe(0);
+  it('quá 90 ngày + tsudev.com xác nhận KHÔNG gia hạn ⇒ xoá; tài khoản còn Pro giữ nguyên', async () => {
+    await seed('life-keep');
+    await seedLapsed('life-gone');
+    setStatusResponder(({ subs }) => Response.json({ results: Object.fromEntries(subs.map((s) => [s, { status: 'ok', pro_until: t0() - 60 }])) }));
+    const e = await withRp();
+    await runMaintenance(e, Date.now() + 89 * DAY * 1000);
+    expect(statusCalls).toHaveLength(0); // chưa tới 90 ngày ⇒ không hỏi
+    await runMaintenance(e, FUTURE());
+    await runMaintenance(e, FUTURE());
+    expect(statusCalls.length).toBeGreaterThan(0);
+    const call0 = statusCalls.find((c) => c.body.subs.includes('life-gone'))!;
+    expect(call0.body.client_id).toBe('tsufiles');
+    expect(call0.body.subs).not.toContain('life-keep');
+    const a = await verifyAssertion(call0.auth);
+    expect(a.exp! - a.iat!).toBeLessThanOrEqual(300);
+    expect(typeof a.jti).toBe('string');
+    expect(await revOf('life-gone')).toBe(0);
+    expect(await revOf('life-keep')).toBe(3);
   });
 
-  it('PURGE_ENABLED = off ⇒ không tự xoá theo hạn (chỉ xoá theo yêu cầu)', async () => {
-    const t = await seed('life-off');
-    await call('/v1/account', { token: await jws({ sub: 'life-off', pro_until: 1, iat: Math.floor(Date.now() / 1000) + 1 }) });
-    await runMaintenance({ ...env, PURGE_ENABLED: 'off' }, Date.now() + 365 * DAY * 1000);
-    expect((await json(await call('/v1/account', { token: t }))).rev).toBe(3);
+  it('gia hạn trên web mà KHÔNG mở app ⇒ không xoá, cập nhật pro_until từ tsudev.com', async () => {
+    await seedLapsed('life-renewed');
+    const renewedUntil = t0() + 365 * DAY;
+    setStatusResponder(({ subs }) => Response.json({ results: Object.fromEntries(subs.map((s) => [s, { status: 'ok', pro_until: renewedUntil }])) }));
+    await runMaintenance(await withRp(), FUTURE());
+    await runMaintenance(await withRp(), FUTURE());
+    expect(statusCalls.some((c) => c.body.subs.includes('life-renewed'))).toBe(true);
+    expect(await revOf('life-renewed')).toBe(3);
+    const rows = await env.DB.prepare('SELECT COUNT(*) AS n FROM accounts WHERE pro_until = ?').bind(renewedUntil * 1000).first<{ n: number }>();
+    expect(rows!.n).toBeGreaterThanOrEqual(1);
+  });
+
+  it('kênh trạng thái lỗi / unknown_subject ⇒ hoãn (không xoá), hỏi lại tối đa 1 lần/ngày', async () => {
+    await seedLapsed('life-down');
+    await seedLapsed('life-unknown');
+    setStatusResponder(({ subs }) =>
+      subs.includes('life-down') ? new Response('bad gateway', { status: 502 }) : Response.json({ results: { 'life-unknown': { status: 'unknown_subject' } } }),
+    );
+    const e = await withRp();
+    await runMaintenance(e, FUTURE());
+    const calls = statusCalls.length;
+    expect(calls).toBeGreaterThan(0);
+    await runMaintenance(e, FUTURE());
+    expect(statusCalls.length).toBe(calls); // đã đánh dấu purge_checked_at ⇒ không dội tsudev.com
+    expect(await revOf('life-down')).toBe(3);
+    expect(await revOf('life-unknown')).toBe(3);
+  });
+
+  it('tài khoản đã xoá ở tsudev.com ⇒ xoá', async () => {
+    await seedLapsed('life-deleted');
+    setStatusResponder(({ subs }) => Response.json({ results: Object.fromEntries(subs.map((s) => [s, { status: 'deleted' }])) }));
+    await runMaintenance(await withRp(), FUTURE());
+    await runMaintenance(await withRp(), FUTURE());
+    expect(await revOf('life-deleted')).toBe(0);
+  });
+
+  it('PURGE_MODE = off hoặc thiếu khoá RP ⇒ không hỏi, không tự xoá', async () => {
+    await seedLapsed('life-off');
+    await runMaintenance(await withRp({ PURGE_MODE: 'off' }), Date.now() + 365 * DAY * 1000);
+    await runMaintenance(env, Date.now() + 365 * DAY * 1000); // env không có RP_PRIVATE_JWK
+    expect(statusCalls).toHaveLength(0);
+    expect(await revOf('life-off')).toBe(3);
     expect(await count('records')).toBeGreaterThan(0);
+  });
+
+  it('sub chỉ lưu dạng mã hoá AES-GCM (AAD = không gian tên), giải được bằng SUB_ENC_KEY', async () => {
+    await seed('sub-ma-hoa-77');
+    const rows = await env.DB.prepare('SELECT ns, sub_enc FROM accounts WHERE sub_enc IS NOT NULL').all<{ ns: string; sub_enc: ArrayBuffer }>();
+    expect(rows.results.length).toBeGreaterThan(0);
+    const plain = new TextEncoder().encode('sub-ma-hoa-77');
+    const found = await Promise.all(rows.results.map((r) => decryptSub(env.SUB_ENC_KEY, r.ns, r.sub_enc)));
+    expect(found).toContain('sub-ma-hoa-77');
+    for (const r of rows.results) expect(new Uint8Array(r.sub_enc).join(',')).not.toContain(plain.join(','));
+    // Sai không gian tên (AAD) ⇒ không giải được.
+    expect(await decryptSub(env.SUB_ENC_KEY, 'lotus-share', rows.results.find((r, i) => found[i] === 'sub-ma-hoa-77')!.sub_enc)).toBeNull();
   });
 
   it('JWS cũ hơn không ghi đè pro_until đã biết (chống phát lại)', async () => {

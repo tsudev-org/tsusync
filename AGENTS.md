@@ -40,7 +40,7 @@ xuất tại repo `tsudev-standards` theo `.standards/docs/SYNC.md` mục 1.
 
 - **Loại**: dịch vụ **TsuDEV Sync** - máy chủ đồng bộ bản mã dùng chung cho sản phẩm không có máy chủ riêng
   (PRODUCT_POLICY 7.4). Thư viện máy khách (`@tsudev/sync`, Dart `tsusync`) thêm ở phase PRO-D2.
-- **Stack**: Cloudflare Workers + D1 + R2, TypeScript, Hono, jose (kiểm JWS ES256), zod. Chi tiết: `docs/adr/0001-*.md`.
+- **Stack**: Cloudflare Workers + D1 + R2, TypeScript, Hono, jose (kiểm JWS ES256, DPoP), zod. Chi tiết: `docs/adr/`.
 - **Mức phân loại dữ liệu cao nhất**: D3 nhưng CHỈ ở dạng bản mã (máy chủ không có khoá); siêu dữ liệu D1.
 - **Người liên hệ khi có sự cố**: chủ dự án tsudev.
 
@@ -67,7 +67,7 @@ npx wrangler deploy --dry-run --outdir /tmp/tsusync-build   # chỉ dựng, KHÔ
 | Lệch ở đâu | Vì sao | Kế hoạch |
 | --- | --- | --- |
 | Chưa có `docs/ARCHITECTURE.md` đầy đủ | Kiến trúc nằm ở ADR-0001; `docs/ARCHITECTURE.md` chỉ giữ bảng hạn mức | Mở rộng khi deploy |
-| `wrangler.test.jsonc` dùng `compatibility_date` ngày 22/08/2026 | workerd đi kèm `@cloudflare/vitest-pool-workers` 0.23.0 chỉ hỗ trợ tới ngày đó | Nâng khi chuyển sang `@cloudflare/vitest-plugin` |
+| TypeScript ghim 6.0.x (Dependabot bỏ qua ≥ 6.1) | `typescript-eslint` 8.73 chỉ hỗ trợ TypeScript < 6.1 | Gỡ dòng `ignore` trong `.github/dependabot.yml` khi `typescript-eslint` hỗ trợ |
 
 ### B.5. Việc riêng của repo cần biết trước khi sửa
 
@@ -76,4 +76,6 @@ npx wrangler deploy --dry-run --outdir /tmp/tsusync-build   # chỉ dựng, KHÔ
 - Mọi tính năng mới phải ước lượng lại hạn mức miễn phí (ADR-0001 mục 1.1). Cần vượt ⇒ dừng, hỏi chủ dự án.
 - Đổi hợp đồng HTTP (đường dẫn, mã lỗi, khung JSON) ⇒ tăng phiên bản theo SemVer, ghi CHANGELOG, cập nhật thư viện máy
   khách cùng lúc.
-- `PURGE_ENABLED` chỉ bật khi chủ dự án duyệt (ADR-0001 mục 5).
+- Xoá tự động chỉ chạy khi tsudev.com xác nhận qua kênh trạng thái (`PURGE_MODE = "verified"`, ADR-0002). Không bao
+  giờ đổi sang xoá không xác minh. `wrangler.test.jsonc` dùng CÙNG `compatibility_date` với `wrangler.jsonc`.
+- Secret khi deploy: `RP_PRIVATE_JWK`, `SUB_ENC_KEY` (ADR-0002). Test dùng giá trị giả trong `vitest.config.ts`.

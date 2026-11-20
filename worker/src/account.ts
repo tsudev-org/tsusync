@@ -1,5 +1,5 @@
 import { GRACE_MS, globalBudget, intVar, quotaFor } from './config';
-import { randomToken } from './crypto';
+import { encryptSub, randomToken } from './crypto';
 import type { Caller, Env } from './env';
 import { ApiError } from './errors';
 
@@ -15,6 +15,8 @@ export interface AccountRow {
   purge_requested: number;
   created_at: number;
   seen_at: number;
+  sub_enc: ArrayBuffer | null;
+  purge_checked_at: number;
 }
 
 const SEEN_REFRESH_MS = 24 * 3600 * 1000;
@@ -60,15 +62,22 @@ export async function loadAccount(env: Env, c: Caller, opts: { create: boolean; 
   if (!a) {
     if (!opts.create) return null;
     await env.DB.prepare(
-      `INSERT INTO accounts (ns, sub_key, pro_until, pro_iat, lock, created_at, seen_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)
+      `INSERT INTO accounts (ns, sub_key, pro_until, pro_iat, lock, created_at, seen_at, sub_enc) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6, ?7)
        ON CONFLICT (ns, sub_key) DO NOTHING`,
     )
-      .bind(c.ns, c.subKey, c.proUntil, c.iat, randomToken(), now)
+      .bind(c.ns, c.subKey, c.proUntil, c.iat, randomToken(), now, await encryptSub(env.SUB_ENC_KEY, c.ns, c.sub))
       .run();
     a = await getAccount(env, c);
     if (!a) throw new ApiError(503, 'unavailable', 'Máy chủ đồng bộ tạm bận. Hãy thử lại sau.');
   } else {
     const newer = c.iat > a.pro_iat && c.proUntil !== a.pro_until;
+    if (!a.sub_enc && env.SUB_ENC_KEY) {
+      // Tài khoản tạo trước khi có SUB_ENC_KEY (hoặc trước v0.2.0): bổ sung để xoá có xác minh được.
+      const subEnc = await encryptSub(env.SUB_ENC_KEY, c.ns, c.sub);
+      if (subEnc) {
+        await env.DB.prepare('UPDATE accounts SET sub_enc = ?3 WHERE ns = ?1 AND sub_key = ?2 AND sub_enc IS NULL').bind(c.ns, c.subKey, subEnc).run();
+      }
+    }
     if (newer || a.seen_at < now - SEEN_REFRESH_MS) {
       // JWS cũ hơn bản đã biết không được hạ/ nâng pro_until (chống phát lại JWS cũ).
       await env.DB.prepare(

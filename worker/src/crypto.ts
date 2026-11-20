@@ -25,3 +25,42 @@ export const hex = (b: Uint8Array) => [...b].map((x) => x.toString(16).padStart(
 export function randomToken(bytes = 16): string {
   return b64url(crypto.getRandomValues(new Uint8Array(bytes)));
 }
+
+let subKeyCache: { raw: string; key: CryptoKey } | null = null;
+
+async function subEncKey(raw: string | undefined): Promise<CryptoKey | null> {
+  if (!raw) return null;
+  if (subKeyCache?.raw === raw) return subKeyCache.key;
+  const bytes = fromB64url(raw);
+  if (bytes?.length !== 32) return null;
+  const key = await crypto.subtle.importKey('raw', bytes, 'AES-GCM', false, ['encrypt', 'decrypt']);
+  subKeyCache = { raw, key };
+  return key;
+}
+
+/**
+ * Mã hoá `sub` (AES-256-GCM, nonce 96 bit ngẫu nhiên, AAD = không gian tên) để hỏi lại tsudev.com trước khi xoá
+ * (ADR-0002). Kết quả = nonce || bản mã. Thiếu/sai `SUB_ENC_KEY` ⇒ null (không lưu được ⇒ không tự xoá được).
+ */
+export async function encryptSub(raw: string | undefined, ns: string, sub: string): Promise<Uint8Array | null> {
+  const key = await subEncKey(raw);
+  if (!key) return null;
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: enc.encode(ns) }, key, enc.encode(sub)));
+  const out = new Uint8Array(12 + ct.length);
+  out.set(iv);
+  out.set(ct, 12);
+  return out;
+}
+
+export async function decryptSub(raw: string | undefined, ns: string, blob: ArrayBuffer | null): Promise<string | null> {
+  const key = await subEncKey(raw);
+  if (!key || !blob || blob.byteLength < 12 + 16 + 1) return null;
+  const b = new Uint8Array(blob);
+  try {
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(0, 12), additionalData: enc.encode(ns) }, key, b.slice(12));
+    return new TextDecoder().decode(pt);
+  } catch {
+    return null;
+  }
+}

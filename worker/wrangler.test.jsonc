@@ -2,7 +2,7 @@
 {
   "name": "tsusync-test",
   "main": "src/index.ts",
-  "compatibility_date": "2026-08-22",
+  "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat"],
   "d1_databases": [{ "binding": "DB", "database_name": "tsusync-test", "database_id": "test", "migrations_dir": "migrations" }],
   "r2_buckets": [{ "binding": "FILES", "bucket_name": "tsusync-files-test" }],
@@ -13,7 +13,10 @@
     "GLOBAL_DATA_BUDGET_MIB": "400",
     "GLOBAL_FILE_BUDGET_MIB": "8192",
     "WRITE_RATE_PER_MIN": "1000",
-    "PURGE_ENABLED": "on",
+    "PURGE_MODE": "verified",
+    "RP_CLIENT_ID": "tsusync",
+    "ENTITLEMENTS_STATUS_URL": "https://idp.test/api/rp/entitlements/status",
+    "DPOP_REQUIRED": "off",
     "MAINTENANCE_SAMPLE": "0"
   }
 }

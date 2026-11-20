@@ -10,3 +10,7 @@ updates:
     schedule: { interval: monthly, timezone: Asia/Ho_Chi_Minh }
     open-pull-requests-limit: 2
     groups: { npm: { patterns: ['*'] } }
+    ignore:
+      # typescript-eslint 8.x chỉ hỗ trợ TypeScript < 6.1 - gỡ khi có bản hỗ trợ (AGENTS.md B.4).
+      - dependency-name: typescript
+        versions: ['>=6.1.0']
