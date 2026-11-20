@@ -68,11 +68,21 @@ class SyncPage<T> {
   final bool more;
 }
 
+bool _isSecureBase(Uri u) {
+  if (!u.hasAuthority || u.userInfo.isNotEmpty || u.hasQuery || u.hasFragment) return false;
+  if (u.scheme == 'https') return true;
+  return u.scheme == 'http' && const {'localhost', '127.0.0.1', '::1'}.contains(u.host);
+}
+
 /// Máy khách HTTP của TsuDEV Sync (ADR-0001 mục 3, ADR-0002 mục 3.2). Chỉ chuyển bản mã; [SyncSession] ghép mã hoá.
 class SyncClient {
   SyncClient({required Uri baseUrl, required this.getJws, this.installationId, this.dpop, http.Client? httpClient})
     : _base = baseUrl.toString().replaceFirst(RegExp(r'/+$'), ''),
       _http = httpClient ?? http.Client() {
+    // JWS quyền lợi đi trong header: chỉ https (http chỉ cho máy mình - `wrangler dev`).
+    if (!_isSecureBase(baseUrl)) {
+      throw ArgumentError.value(baseUrl, 'baseUrl', 'phải là https:// (http chỉ cho localhost)');
+    }
     if (installationId != null && !_installation.hasMatch(installationId!)) {
       throw ArgumentError.value(installationId, 'installationId', 'phải đúng 22 ký tự base64url');
     }

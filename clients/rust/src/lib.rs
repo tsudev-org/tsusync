@@ -18,7 +18,7 @@ use dryoc::classic::crypto_secretstream_xchacha20poly1305::{
     Header, State, crypto_secretstream_xchacha20poly1305_init_pull, crypto_secretstream_xchacha20poly1305_init_push,
     crypto_secretstream_xchacha20poly1305_pull, crypto_secretstream_xchacha20poly1305_push,
 };
-use dryoc::rng::copy_randombytes;
+use dryoc::rng::randombytes_buf;
 use serde_json::{Map, Value, json};
 use unicode_normalization::UnicodeNormalization;
 use zeroize::Zeroizing;
@@ -219,8 +219,7 @@ pub struct SyncKeys {
 /// Tạo khoá mới cho tài khoản đồng bộ (lần đầu bật đồng bộ trên thiết bị đầu tiên). Mặc định [`KDF_DEFAULT`].
 pub fn create_keys(password: &str, cost: Option<KdfCost>) -> Result<SyncKeys> {
     let KdfCost { ops, mem } = cost.unwrap_or(KDF_DEFAULT);
-    let mut salt = [0u8; SALT_BYTES];
-    copy_randombytes(&mut salt);
+    let salt = randombytes_buf(SALT_BYTES);
     let d = derive_raw(password, &salt, ops, mem)?;
     let params = KdfParams { salt: b64u(&salt), ops, mem, check: b64u(&d.check) };
     Ok(SyncKeys { data_key: d.data_key, params })

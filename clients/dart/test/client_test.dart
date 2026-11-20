@@ -159,4 +159,28 @@ void main() {
     await s.putPlainFile('f1', Uint8List(70000));
     expect((await s.getPlainFile('f1')).length, 70000);
   });
+
+  test('baseUrl chỉ nhận https (http chỉ cho localhost), không nhận thông tin đăng nhập/query', () {
+    SyncClient make(String u) => SyncClient(baseUrl: Uri.parse(u), getJws: (_) async => 'j');
+    for (final ok in [
+      'https://sync.tsudev.com',
+      'https://s.test/',
+      'http://localhost:8787',
+      'http://127.0.0.1:8787/',
+      'http://[::1]:8787',
+    ]) {
+      expect(() => make(ok), returnsNormally, reason: ok);
+    }
+    for (final bad in [
+      'http://sync.tsudev.com',
+      'http://localhost.evil.test',
+      'ftp://s.test',
+      's.test',
+      '',
+      'https://u:p@s.test',
+      'https://s.test/?x=1',
+    ]) {
+      expect(() => make(bad), throwsArgumentError, reason: bad);
+    }
+  });
 }

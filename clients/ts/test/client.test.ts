@@ -108,3 +108,16 @@ describe('SyncSession', () => {
     expect((await s2.getPlainFile('f1')).length).toBe(70_000);
   });
 });
+
+describe('baseUrl', () => {
+  it('chỉ nhận https (http chỉ cho localhost), không nhận thông tin đăng nhập/query trong URL', () => {
+    const make = (baseUrl: string) => () => new SyncClient({ baseUrl, getJws: async () => 'j', fetch: fakeFetch([]).f });
+    for (const ok of ['https://sync.tsudev.com', 'https://s.test/', 'http://localhost:8787', 'http://127.0.0.1:8787/', 'http://[::1]:8787']) {
+      expect(make(ok)).not.toThrow();
+    }
+    for (const bad of ['http://sync.tsudev.com', 'http://localhost.evil.test', 'ftp://s.test', 's.test', '', 'https://u:p@s.test', 'https://s.test/?x=1', 'javascript:alert(1)']) {
+      expect(make(bad)).toThrow(TypeError);
+    }
+  });
+});
+
