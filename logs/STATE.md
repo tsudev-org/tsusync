@@ -5,10 +5,9 @@
 
 ## Hàng đợi task (làm từ trên xuống)
 
-- [ ] PRO-D3: Rust crate `tsusync` + .NET `TsuSync` qua `conformance/vectors-v1.json` (ADR-0003).
-- [ ] Chờ tsudev.com triển khai kênh trạng thái + DPoP (phiếu `tsudev/logs/handover/20261120-PRO2_*`), rồi
-  `DPOP_REQUIRED = "on"` khi mọi máy khách đã ký DPoP (ADR-0002 mục 3.2).
-- [ ] Deploy khi có sản phẩm dùng + chủ dự án duyệt (ADR-0001 mục 4) - KHÔNG tự làm.
+- ⛔ **ĐÃ NGỪNG 25/11/2026** (bộ quy ước v7.0.0, phiếu `20261125-SYN1`): không deploy, không phát triển tiếp; repo
+  được lưu trữ (archive) với sự cho phép của chủ dự án. Đồng bộ thiết bị chuyển sang `tsudev-org/tsulink`. Các phiếu
+  bản sao còn lại trong `logs/handover/` (AV1, SEC1, QR1, INT1, SEC2, UI2, SDB1) KHÔNG áp dụng nữa.
 
 ## Đang thực hiện
 
@@ -16,6 +15,8 @@
 | --- | --- | --- |
 
 ## Đã hoàn thành (mới nhất trên cùng)
+
+- 26/11/2026 - SYN1: biểu ngữ ngừng trong README, cập nhật STATE, rồi archive repo (điều phối projects-82).
 
 - 20/11/2026 - PRO-D2: ADR-0003 (định dạng `TS 01`), `@tsudev/sync` 0.1.0 (53 test) + Dart `tsusync` 0.1.0, vector
   `conformance/vectors-v1.json` (36 ca) kiểm thêm bằng libsodium C độc lập. (`logs/LOCKS.md` chỉ-đọc nên không khoá

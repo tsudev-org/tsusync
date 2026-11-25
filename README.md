@@ -1,5 +1,14 @@
 # TsuDEV Sync (tsusync)
 
+> ⛔ **ĐÃ NGỪNG TỪ 25/11/2026 - repo chỉ còn để đọc (archived).** Chủ dự án quyết định dữ liệu người dùng của hệ TsuDEV
+> **không** lên internet hay máy chủ đồng bộ nữa (tsudev-standards **v7.0.0**, `PRODUCT_POLICY` mục 7, quyền lợi Pro Q3
+> bị bỏ). Dịch vụ này **chưa từng được triển khai** (không có dữ liệu người dùng thật). Đồng bộ giữa thiết bị nay làm
+> trực tiếp qua mạng nội bộ bằng **[Tsu Link](https://github.com/tsudev-org/tsulink)** (`LOCAL_SYNC.md`); vector mật
+> mã `conformance/vectors-v1.json` đã chuyển sang `tsulink` cho định dạng sao lưu `.tsubak`.
+>
+> ⛔ **Discontinued on 25/11/2026 (archived, read-only).** TsuDEV no longer sends user data to the internet or a sync
+> server. This service was never deployed. Device-to-device sync now lives in [Tsu Link](https://github.com/tsudev-org/tsulink).
+
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16955/badge)](https://www.bestpractices.dev/projects/16955)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/tsudev-org/tsusync/badge)](https://scorecard.dev/viewer/?uri=github.com/tsudev-org/tsusync)
 
