@@ -6,6 +6,10 @@
 Dịch vụ đồng bộ và sao lưu đám mây **dùng chung** của hệ sinh thái tsudev cho các sản phẩm không có máy chủ riêng
 (desktop, trò chơi, tsufiles, lotus-share...). Chỉ dành cho tài khoản **TsuDEV Pro**; máy chủ chỉ giữ **bản mã**.
 
+Mọi app TsuDEV miễn phí, mã nguồn mở; TsuDEV Pro là gói tuỳ chọn để ủng hộ tác giả. Đồng bộ + sao lưu đám mây là
+quyền lợi Q3 của Pro (PRODUCT_POLICY 3.7.1) vì chỉ phần này tốn dung lượng máy chủ; xuất/nhập/sao lưu ra tệp trong app
+luôn miễn phí.
+
 - Kiến trúc và hợp đồng HTTP: [`docs/adr/0001-kien-truc-tsudev-sync.md`](docs/adr/0001-kien-truc-tsudev-sync.md)
 - Hạn mức đang dùng: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - Máy chủ: [`worker/`](worker/) - Cloudflare Workers + D1 + R2
@@ -58,6 +62,8 @@ npm run check
 
 TsuDEV Sync (AGPL-3.0-only) is the shared **end-to-end encrypted** sync and backup service of the TsuDEV apps that have
 no server of their own. It is available to **TsuDEV Pro** accounts only, and the server stores **ciphertext only**.
+Every TsuDEV app is free and open source; TsuDEV Pro is an optional plan to support the author, and cloud sync is one
+of its benefits because it is the part that costs server storage. Export/import/backup to a file stays free.
 
 - **Server**: a Cloudflare Worker (`worker/`, D1 + R2) with a small HTTP API (records with a `rev` cursor, files,
   account quota and deletion). Every request carries the ES256 entitlement JWS from tsudev.com (fresh within 24 hours,
